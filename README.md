@@ -1,7 +1,7 @@
 # Notification Challenge API
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/CWmkDVcqPMWbHCRX9eAqhf/KnkpvY4fatgoPVuuFtHwf3/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/CWmkDVcqPMWbHCRX9eAqhf/KnkpvY4fatgoPVuuFtHwf3/tree/master)
-[![Coverage Status](https://coveralls.io/repos/github/Cainabel1910/notification-challenge/badge.svg?branch=master)](https://coveralls.io/github/Cainabel1910/notification-challenge?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/Cainabel1910/notification-challenge/badge.svg?branch=master&v=2)](https://coveralls.io/github/Cainabel1910/notification-challenge?branch=master)
 
 FastAPI REST API for user and notification management, with JWT authentication, business validations, and channel-based notification strategies.
 
