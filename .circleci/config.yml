@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  coveralls: coveralls/coveralls@2.2.5
+
 jobs:
   test:
     docker:
@@ -30,7 +33,9 @@ jobs:
 
       - run:
           name: Run tests
-          command: python -m pytest -v
+          command: python -m pytest -v --cov=app --cov-report=xml
+      
+      - coveralls/upload
 
 workflows:
   test-workflow:
