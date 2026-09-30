@@ -1,0 +1,38 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/python:3.14
+
+    working_directory: ~/project/backend
+
+    environment:
+      DATABASE_URL: "sqlite://"
+      PASSWORD_MIN_LENGTH: "8"
+      PASSWORD_REQUIRE_UPPERCASE: "true"
+      PASSWORD_REQUIRE_NUMBER: "true"
+      PASSWORD_REQUIRE_SYMBOL: "true"
+      JWT_SECRET_KEY: "circleci-test-secret"
+      JWT_ALGORITHM: "HS256"
+      JWT_EXPIRATION_MINUTES: "30"
+      SMS_MAX_LENGTH: "160"
+
+    steps:
+      - checkout:
+          path: ~/project
+
+      - run:
+          name: Install dependencies
+          command: |
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+      - run:
+          name: Run tests
+          command: python -m pytest -v
+
+workflows:
+  test-workflow:
+    jobs:
+      - test

@@ -7,3 +7,5 @@ pydantic-settings
 pydantic[email]
 pyjwt
 pwdlib[argon2]
+pytest
+httpx
