@@ -1,5 +1,7 @@
 # Challenge Setup
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/circleci/CWmkDVcqPMWbHCRX9eAqhf/KnkpvY4fatgoPVuuFtHwf3/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/CWmkDVcqPMWbHCRX9eAqhf/KnkpvY4fatgoPVuuFtHwf3/tree/main)
+
 FastAPI API for user and notification management, with JWT authentication, business validations, and channel-based sending strategies.
 
 ## Requirements
