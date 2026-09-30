@@ -38,7 +38,7 @@ class UserService:
                 UserMessages.NOT_FOUND
             )
     
-            return user
+        return user
 
 
     def register_user(self, user_data: UserCreate) -> UserModel:

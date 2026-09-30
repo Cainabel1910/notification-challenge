@@ -231,3 +231,226 @@ def test_list_notifications_requires_authentication(
     response = client.get("/notifications")
 
     assert response.status_code == 401
+
+
+def test_list_users_returns_all_users(client: TestClient) -> None:
+    response = client.get("/users")
+
+    assert response.status_code == 200
+    users = response.json()
+    assert len(users) == 1
+    assert users[0]["id"] == str(TEST_USER_ID)
+    assert users[0]["email"] == "test@example.com"
+    assert users[0]["created_at"]
+
+
+def test_get_user_by_id_returns_user(client: TestClient) -> None:
+    response = client.get(f"/users/{TEST_USER_ID}")
+
+    assert response.status_code == 200
+    assert response.json()["id"] == str(TEST_USER_ID)
+    assert response.json()["email"] == "test@example.com"
+
+
+def test_get_user_by_email_returns_not_found_for_unknown_email(
+    client: TestClient,
+) -> None:
+    response = client.get("/users/by-email/missing@example.com")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "User not found"}
+
+
+def test_get_my_profile_returns_authenticated_user(
+    client: TestClient,
+) -> None:
+    response = client.get(
+        "/users/me",
+        headers=authorization_headers(),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["id"] == str(TEST_USER_ID)
+    assert response.json()["email"] == "test@example.com"
+
+
+def test_register_user_returns_created_user(client: TestClient) -> None:
+    response = client.post(
+        "/users",
+        json={
+            "email": "new-user@example.com",
+            "password": "SecurePass1!",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["email"] == "new-user@example.com"
+    assert response.json()["id"]
+    assert response.json()["created_at"]
+    assert "password_hash" not in response.json()
+
+
+def test_register_user_rejects_duplicate_email(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/users",
+        json={
+            "email": "test@example.com",
+            "password": "SecurePass1!",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Email already registered"}
+
+
+def test_register_user_rejects_short_password(client: TestClient) -> None:
+    response = client.post(
+        "/users",
+        json={
+            "email": "new-user@example.com",
+            "password": "Short1!",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_login_returns_access_token_for_registered_user(
+    client: TestClient,
+) -> None:
+    client.post(
+        "/users",
+        json={
+            "email": "login@example.com",
+            "password": "SecurePass1!",
+        },
+    )
+
+    response = client.post(
+        "/auth/login",
+        json={
+            "email": "login@example.com",
+            "password": "SecurePass1!",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["access_token"]
+    assert response.json()["token_type"] == "bearer"
+
+
+def test_login_rejects_unknown_email(client: TestClient) -> None:
+    response = client.post(
+        "/auth/login",
+        json={
+            "email": "unknown@example.com",
+            "password": "SecurePass1!",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Invalid email or password"}
+
+
+def test_login_rejects_incorrect_password(client: TestClient) -> None:
+    client.post(
+        "/users",
+        json={
+            "email": "login@example.com",
+            "password": "SecurePass1!",
+        },
+    )
+    response = client.post(
+        "/auth/login",
+        json={
+            "email": "login@example.com",
+            "password": "WrongPass1!",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Invalid email or password"}
+
+
+@pytest.mark.parametrize("method", ["get", "put", "delete"])
+def test_notification_operations_return_not_found_for_unknown_id(
+    client: TestClient,
+    method: str,
+) -> None:
+    notification_id = "12345678-1234-5678-1234-567812345678"
+    path = f"/notifications/{notification_id}"
+    if method == "get":
+        response = client.get(path, headers=authorization_headers())
+    elif method == "put":
+        response = client.put(
+            path,
+            headers=authorization_headers(),
+            json={
+                "title": "Updated title",
+                "content": "Updated content",
+                "channel": "email",
+                "recipient": "recipient@example.com",
+            },
+        )
+    else:
+        response = client.delete(path, headers=authorization_headers())
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Notification not found"}
+
+
+def test_create_push_notification_returns_created_notification(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/notifications",
+        headers=authorization_headers(),
+        json={
+            "title": "Push test",
+            "content": "Push content",
+            "channel": "push",
+            "recipient": "device-token",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["channel"] == "push"
+    assert response.json()["recipient"] == "device-token"
+
+
+def test_create_push_notification_rejects_empty_recipient(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/notifications",
+        headers=authorization_headers(),
+        json={
+            "title": "Push test",
+            "content": "Push content",
+            "channel": "push",
+            "recipient": "   ",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid push recipient"}
+
+
+def test_create_sms_notification_rejects_invalid_phone_number(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/notifications",
+        headers=authorization_headers(),
+        json={
+            "title": "SMS test",
+            "content": "SMS content",
+            "channel": "sms",
+            "recipient": "not-a-phone-number",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid SMS recipient"}
